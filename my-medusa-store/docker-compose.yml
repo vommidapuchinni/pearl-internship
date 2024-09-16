@@ -9,11 +9,12 @@ services:
       - COOKIE_SECRET=something
       - DATABASE_TYPE=postgres
       - DATABASE_URL=postgres://postgres:chinni@postgres:5432/medusa_db
-      - REDIS_URL=
+      - REDIS_URL=redis://redis:6379  # Use the Redis service name
     ports:
-      - "9000:9000"
+      - "9001:9000"  # Map host port 9001 to container port 9000 (adjust if necessary)
     depends_on:
       - postgres
+      - redis  # Ensure dependency on Redis service
     networks:
       - medusa-network
 
@@ -26,6 +27,14 @@ services:
       POSTGRES_DB: medusa_db
     ports:
       - "5432:5432"
+    networks:
+      - medusa-network
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
     networks:
       - medusa-network
 
