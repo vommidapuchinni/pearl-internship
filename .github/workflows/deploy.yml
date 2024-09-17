@@ -20,27 +20,27 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    # Step 3: Install Docker and Docker Compose on EC2 (if not installed)
+    # Step 3: Install Docker and Docker Compose on EC2 (if not already installed)
     - name: Install Docker on EC2
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
         sudo apt-get update
         sudo apt-get install -y docker.io docker-compose
+        sudo systemctl enable docker
         sudo systemctl start docker
-        sudo usermod -aG docker ubuntu
+        sudo usermod -aG docker $USER
         EOF
 
     # Step 4: Copy the project files to the EC2 instance
     - name: Copy files to EC2
       run: |
-        scp -o StrictHostKeyChecking=no -r ./* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/medusa
+        scp -o StrictHostKeyChecking=no -r ./* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/medusa
 
     # Step 5: Run Docker Compose to build and deploy the Medusa app on EC2
     - name: Deploy Medusa using Docker Compose
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-        cd /home/ubuntu/medusa
-        sudo docker-compose down
-        sudo docker-compose up -d --build
+        cd /home/${{ secrets.EC2_USER }}/medusa
+        sudo docker-compose down || true  # Stop any existing containers
+        sudo docker-compose up -d --build # Rebuild and start containers
         EOF
-
