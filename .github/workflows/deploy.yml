@@ -18,10 +18,15 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-    - name: Copy files to EC2
+    - name: Copy docker-compose.yml, Dockerfile, and source files to EC2
       run: |
-        scp -o StrictHostKeyChecking=no -r ./docker-compose.yml ./Dockerfile ubuntu@98.80.71.189:/home/ubuntu/
-        scp -o StrictHostKeyChecking=no -r ./medusa-backend/* ubuntu@98.80.71.189:/home/ubuntu/medusa-backend/
+        scp -o StrictHostKeyChecking=no ./docker-compose.yml ubuntu@98.80.71.189:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no ./Dockerfile ubuntu@98.80.71.189:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no -r ./src/ ubuntu@98.80.71.189:/home/ubuntu/src/
+        scp -o StrictHostKeyChecking=no ./index.js ubuntu@98.80.71.189:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no ./medusa-config.js ubuntu@98.80.71.189:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no ./package.json ubuntu@98.80.71.189:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no ./tsconfig.json ubuntu@98.80.71.189:/home/ubuntu/
 
     - name: SSH into EC2 and deploy
       run: |
@@ -30,4 +35,3 @@ jobs:
           docker-compose down || true
           docker-compose up -d --build
         EOF
-
