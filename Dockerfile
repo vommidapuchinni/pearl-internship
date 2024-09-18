@@ -10,6 +10,9 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Install Medusa CLI globally
+RUN npm install -g @medusajs/medusa-cli
+
 # Copy the rest of the application code
 COPY . .
 
@@ -20,5 +23,5 @@ RUN npm run build:server
 EXPOSE 9000
 
 # Command to run the application
-CMD [ "npx", "medusa", "start" ]
+CMD [ "medusa", "develop" ]
 

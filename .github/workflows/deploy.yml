@@ -28,7 +28,8 @@ jobs:
     - name: SSH into EC2 and deploy
       run: |
         ssh -o StrictHostKeyChecking=no ubuntu@98.80.71.189 << 'EOF'
-          cd /home/ubuntu/medusa-backend
+          set -e
+          cd /home/ubuntu/medusa-backend || exit 1
           docker-compose down || true
           docker-compose up -d --build
         EOF
