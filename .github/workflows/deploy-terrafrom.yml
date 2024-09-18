@@ -1,45 +1,44 @@
-name: Deploy Medusa
+name: Deploy to Amazon EC2
 
 on:
   push:
     branches:
-      - master
+      - main
+
+env:
+  EC2_INSTANCE_IP: 3.88.105.149         # Set this to your EC2 instance's public IP address
+  EC2_USER: ubuntu                      # Set this to the EC2 username, e.g., ec2-user for Amazon Linux
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Store your EC2 SSH private key in GitHub secrets
+  DOCKER_IMAGE: chinni111/medusa        # Replace with your Docker Hub image name
+  DOCKER_IMAGE_TAG: latest              # Set this to the image tag, e.g., latest
+  COMPOSE_FILE_PATH: ./docker-compose.yml     # Set this to the path of your Docker Compose file
 
 jobs:
   deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build Docker image
+      - name: Set up SSH
         run: |
-          docker build -t chinni111/medusa:latest .
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+      - name: Transfer Docker Compose file to EC2
+        run: scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.COMPOSE_FILE_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }}:/home/${{ env.EC2_USER }}/docker-compose.yml
 
-      - name: Push Docker image
+      - name: Deploy to EC2 via SSH
         run: |
-          docker push chinni111/medusa:latest
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }} << EOF
+            # Pull the latest Docker image from Docker Hub
+            sudo docker pull ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_TAG }}
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v0.1.1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            # SSH into EC2 and pull the latest Docker image and restart services
-            cd /home/ubuntu/medusa || exit
-            sudo docker-compose pull || exit
-            sudo docker-compose down || exit
-            sudo docker-compose up -d || exit
-
+            # Stop existing containers if running, then run Docker Compose
+            sudo docker-compose down || true
+            sudo docker-compose up -d
+          EOF
