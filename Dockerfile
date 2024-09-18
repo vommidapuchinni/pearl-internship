@@ -4,20 +4,21 @@ FROM node:18
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy the package.json and package-lock.json
+# Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Copy the rest of the application code to the working directory
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application using the correct build script
+# Ensure that tsconfig.server.json is properly referenced
+RUN npm run build:server
 
-# Expose the port Medusa will run on
+# Expose the port Medusa will run on (default 9000)
 EXPOSE 9000
 
-# Command to run the application
+# Command to run the Medusa application
 CMD [ "npx", "medusa", "start" ]
