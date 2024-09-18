@@ -1,27 +1,35 @@
-# Use an official Node.js runtime as a parent image
-FROM node:16
+# Stage 1: Build the application
+FROM node:16-alpine AS build
 
-# Set the working directory in the container
-WORKDIR /usr/src/app
+# Set working directory
+WORKDIR /app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install any needed packages
+# Install dependencies
 RUN npm install
 
-# Copy the rest of your application code
+# Copy the rest of the application
 COPY . .
 
-# Expose port 9000 for the Medusa service
+# Build the application if needed
+# RUN npm run build
+
+# Stage 2: Run the application
+FROM node:16-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install Medusa CLI globally again
+RUN npm install -g @medusajs/medusa-cli
+
+# Copy the built application from the build stage
+COPY --from=build /app ./
+
+# Expose the port the app runs on
 EXPOSE 9000
 
-# Define environment variable defaults
-ENV JWT_SECRET=something
-ENV COOKIE_SECRET=something
-ENV DATABASE_TYPE=postgres
-ENV DATABASE_URL=postgres://postgres:chinni@postgres:5432/medusa_db
-ENV REDIS_URL=redis://redis:6379
-
-# Run Medusa application
-CMD [ "npx", "medusa", "develop" ]
+# Run migrations and then start the application
+CMD ["sh", "-c", "medusa migrations run && npm run start"]
