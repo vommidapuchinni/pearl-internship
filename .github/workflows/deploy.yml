@@ -26,7 +26,7 @@ jobs:
         scp -o StrictHostKeyChecking=no ./index.js ubuntu@98.80.71.189:/home/ubuntu/
         scp -o StrictHostKeyChecking=no ./medusa-config.js ubuntu@98.80.71.189:/home/ubuntu/
         scp -o StrictHostKeyChecking=no ./package.json ubuntu@98.80.71.189:/home/ubuntu/
-        scp -o StrictHostKeyChecking=no ./tsconfig.json ubuntu@98.80.71.189:/home/ubuntu/
+        
 
     - name: SSH into EC2 and deploy
       run: |
