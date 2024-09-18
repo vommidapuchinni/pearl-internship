@@ -18,20 +18,18 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-    - name: Copy docker-compose.yml, Dockerfile, and source files to EC2
+    - name: Copy files to EC2
       run: |
-        scp -o StrictHostKeyChecking=no ./docker-compose.yml ubuntu@98.80.71.189:/home/ubuntu/
-        scp -o StrictHostKeyChecking=no ./Dockerfile ubuntu@98.80.71.189:/home/ubuntu/
-        scp -o StrictHostKeyChecking=no -r ./src/ ubuntu@98.80.71.189:/home/ubuntu/src/
-        scp -o StrictHostKeyChecking=no ./index.js ubuntu@98.80.71.189:/home/ubuntu/
-        scp -o StrictHostKeyChecking=no ./medusa-config.js ubuntu@98.80.71.189:/home/ubuntu/
-        scp -o StrictHostKeyChecking=no ./package.json ubuntu@98.80.71.189:/home/ubuntu/
-        
+        ssh -o StrictHostKeyChecking=no ubuntu@98.80.71.189 "mkdir -p /home/ubuntu/medusa-backend"
+        scp -o StrictHostKeyChecking=no -r ./* ubuntu@98.80.71.189:/home/ubuntu/medusa-backend/
+        scp -o StrictHostKeyChecking=no ./docker-compose.yml ubuntu@98.80.71.189:/home/ubuntu/medusa-backend/
+        scp -o StrictHostKeyChecking=no ./Dockerfile ubuntu@98.80.71.189:/home/ubuntu/medusa-backend/
 
     - name: SSH into EC2 and deploy
       run: |
         ssh -o StrictHostKeyChecking=no ubuntu@98.80.71.189 << 'EOF'
-          cd /home/ubuntu
+          cd /home/ubuntu/medusa-backend
           docker-compose down || true
           docker-compose up -d --build
         EOF
+
