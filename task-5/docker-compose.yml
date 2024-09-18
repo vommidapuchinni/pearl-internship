@@ -1,43 +1,31 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: sam
+      POSTGRES_PASSWORD: sam
+      POSTGRES_DB: medusa_db
+    volumes:
+      - medusa-data:/var/lib/postgresql/data
+    networks:
+      - medusa-network
+
   medusa:
     image: chinni111/medusa:latest
-    container_name: medusa
-    environment:
-      - JWT_SECRET=something
-      - COOKIE_SECRET=something
-      - DATABASE_TYPE=postgres
-      - DATABASE_URL=postgres://postgres:chinni@postgres:5432/medusa_db
-      - REDIS_URL=redis://redis:6379
     ports:
       - "9000:9000"
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - medusa-network
-
-  postgres:
-    image: postgres:13
-    container_name: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: chinni
-      POSTGRES_DB: medusa_db
-    ports:
-      - "5432:5432"
+      DATABASE_URL: postgres://sam:sam@db:5432/medusa_db
+    depends_on:
+      - db
     networks:
       - medusa-network
+    command: ["sh", "-c", "npm run seed && npx medusa user -e sam@sam.com -p sam && medusa migrations run && npm run start"]
 
-  redis:
-    image: redis
-    container_name: redis
-    ports:
-      - "6379:6379"
-    networks:
-      - medusa-network
+volumes:
+  medusa-data:
 
 networks:
   medusa-network:
-    driver: bridge
