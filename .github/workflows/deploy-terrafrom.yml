@@ -6,12 +6,12 @@ on:
       - main
 
 env:
-  EC2_INSTANCE_IP: ${{ secrets.SSH_HOST }}        # Use the secret for the EC2 instance IP or hostname
-  EC2_USER: ubuntu                               # Set this to 'ubuntu' as your SSH username
-  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Use the secret for the SSH private key
-  DOCKER_IMAGE: chinni111/medusa                 # Replace with your Docker Hub image name
-  DOCKER_IMAGE_TAG: latest                       # Set this to the image tag, e.g., latest
-  COMPOSE_FILE_PATH: ./docker-compose.yml        # Set this to the path of your Docker Compose file
+  EC2_INSTANCE_IP: ${{ secrets.SSH_HOST }}
+  EC2_USER: ubuntu
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  DOCKER_IMAGE: chinni111/medusa
+  DOCKER_IMAGE_TAG: latest
+  COMPOSE_FILE_PATH: ./task-5/docker-compose.yml  # Updated path to the Docker Compose file
 
 jobs:
   deploy:
@@ -38,6 +38,7 @@ jobs:
       - name: Deploy to EC2 via SSH
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }} << EOF
+            set -e
             # Pull the latest Docker image from Docker Hub
             sudo docker pull ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_TAG }}
 
