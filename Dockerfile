@@ -10,8 +10,6 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy the tsconfig.server.json file
-COPY tsconfig.server.json ./
 
 # Copy the rest of the application code to the working directory
 COPY . .
