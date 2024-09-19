@@ -4,8 +4,8 @@ services:
   db:
     image: postgres:13-alpine
     environment:
-      POSTGRES_USER: sam
-      POSTGRES_PASSWORD: sam
+      POSTGRES_USER: medusa_user  # Updated to new user
+      POSTGRES_PASSWORD: chinni    # Updated to new password
       POSTGRES_DB: medusa_db
     volumes:
       - medusa-data:/var/lib/postgresql/data
@@ -13,11 +13,13 @@ services:
       - medusa-network
 
   medusa:
+    build:
+      context: ./task-5  # Path to the Dockerfile directory
     image: chinni111/medusa:latest
     ports:
       - "9000:9000"
     environment:
-      DATABASE_URL: postgres://sam:sam@db:5432/medusa_db
+      DATABASE_URL: postgres://medusa_user:chinni@db:5432/medusa_db  # Updated to new credentials
     depends_on:
       - db
     networks:
