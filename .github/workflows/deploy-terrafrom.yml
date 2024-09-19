@@ -3,21 +3,12 @@ name: Deploy to Amazon EC2
 on:
   push:
     branches:
-      - main
-
-env:
-  EC2_INSTANCE_IP: ${{ secrets.SSH_HOST }}
-  EC2_USER: ubuntu
-  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  DOCKER_IMAGE: chinni111/medusa
-  DOCKER_IMAGE_TAG: latest
-  COMPOSE_FILE_PATH: ./task-5/docker-compose.yml
+      - master
 
 jobs:
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
       - name: Checkout code
@@ -28,30 +19,20 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
-      - name: Transfer Docker Compose file to EC2
-        run: scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.COMPOSE_FILE_PATH }} ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }}:/home/${{ env.EC2_USER }}/docker-compose.yml
-
-      - name: Deploy to EC2 via SSH
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }} << EOF
-            set -e
-            # Ensure Docker Compose is installed
-            if ! command -v docker-compose &> /dev/null; then
-              echo "Docker Compose not found, installing..."
-              sudo curl -L "https://github.com/docker/compose/releases/download/$(docker-compose version --short)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            fi
-
-            # Pull the latest Docker image from Docker Hub
-            sudo docker pull ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_TAG }}
-
-            # Stop existing containers if running
-            sudo docker-compose down || true
-
-            # Run Docker Compose to start containers
-            sudo docker-compose up -d
-          EOF
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/ubuntu/medusa || exit
+            sudo docker-compose pull || exit
+            sudo docker-compose down || exit
+            sudo docker-compose up -d || exit
