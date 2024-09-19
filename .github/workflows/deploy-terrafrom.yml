@@ -32,6 +32,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            set -x
             cd /home/ubuntu/medusa || exit
             sudo docker-compose pull || exit
             sudo docker-compose down || exit
