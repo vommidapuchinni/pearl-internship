@@ -37,3 +37,5 @@ jobs:
             sudo docker-compose pull || exit
             sudo docker-compose down || exit
             sudo docker-compose up -d || exit
+          debug: true
+          timeout: 10m
