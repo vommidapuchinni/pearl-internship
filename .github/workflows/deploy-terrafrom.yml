@@ -30,9 +30,11 @@ jobs:
           port: 22
           script: |
             set -x
+            echo "Starting deployment"
             cd /home/ubuntu/medusa || exit
             sudo docker-compose pull || exit
             sudo docker-compose down || exit
             sudo docker-compose up -d || exit
+            echo "Deployment finished"
           debug: true
           timeout: 10m
