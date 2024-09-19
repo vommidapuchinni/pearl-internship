@@ -11,7 +11,7 @@ env:
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   DOCKER_IMAGE: chinni111/medusa
   DOCKER_IMAGE_TAG: latest
-  COMPOSE_FILE_PATH: ./task-5/docker-compose.yml  # Updated path to the Docker Compose file
+  COMPOSE_FILE_PATH: ./task-5/docker-compose.yml
 
 jobs:
   deploy:
@@ -39,10 +39,19 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ env.EC2_USER }}@${{ env.EC2_INSTANCE_IP }} << EOF
             set -e
+            # Ensure Docker Compose is installed
+            if ! command -v docker-compose &> /dev/null; then
+              echo "Docker Compose not found, installing..."
+              sudo curl -L "https://github.com/docker/compose/releases/download/$(docker-compose version --short)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            fi
+
             # Pull the latest Docker image from Docker Hub
             sudo docker pull ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_TAG }}
 
-            # Stop existing containers if running, then run Docker Compose
+            # Stop existing containers if running
             sudo docker-compose down || true
+
+            # Run Docker Compose to start containers
             sudo docker-compose up -d
           EOF
